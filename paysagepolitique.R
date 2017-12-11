@@ -3,9 +3,7 @@ library(factoextra)
 library(stringi)
 library(psych)
 library(REdaS)
-library(gstat)
 library(rgdal)
-library(automap)
 
 data <- read.csv("votations.csv", header = TRUE, sep = ";", encoding = "latin1")
 
@@ -35,7 +33,7 @@ par(pty="s")
 plot(-scores$RC3, scores$RC1, xlab = "", ylab = "", xaxt='n', yaxt="n", pch=10, cex=.3)
 mtext('Droite', side=4, line=2, las=1)
 mtext('Gauche', side=2, line=2, las=1)
-mtext("LibÃ©ral", side =3, line=1)
+mtext("Libéral", side =3, line=1)
 mtext("Conservateur", side =1, line=1)
 
 
@@ -98,14 +96,18 @@ write.csv(scores, "scores.csv")
 plot(-scores$RC3, scores$RC1, xlab = "", ylab = "", xaxt='n', yaxt="n", cex=sqrt(scores$Habitants/10000),pch=16, col=scores$Colour)
 mtext('Droite', side=4, line=2, las=1)
 mtext('Gauche', side=2, line=2, las=1)
-mtext("LibÃ©ral", side =3, line=1)
+mtext("Libéral", side =3, line=1)
 mtext("Conservateur", side =1, line=1)
 
 
-scoresspdf <- scores
-scoresspdf <- SpatialPointsDataFrame(scores[,c("RC3", "RC1")], scores)
+## ArcGIS
 
-proj4string(scoresspdf) <- CRS("+proj=longlat +ellps=WGS84") 
+##
+
+## KDE pondéré par la population + ombrage -- cell size 0.005 radius 0.4
+
+## KDE pondéré par la population pour chaque langue (créer des couches de pts pour chaque langue)
+
+## Différence raster entre les KDE de langues pour définir les zones d'extension (Minus-Spatial Analyst)
 
 
-plot(locfit(~scores$RC3 + scores$RC1, data=scores, weights=scores$Habitants))
