@@ -4,13 +4,10 @@ date: "11 décembre 2017"
 output:
   html_document: default
   pdf_document: default
-fig_width: 6 
-fig_height: 4   
+   
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
+
 
 ## Introduction
 
@@ -18,7 +15,7 @@ knitr::opts_chunk$set(echo = TRUE)
 On s'attache ici à reproduire la cartographie du paysage politique suisse réalisée par Hermann et Lautheld (2003), dans leur 
 *Atlas der politischen Landschaften – Ein weltanschauliches Porträt der Schweiz*. 
 
-A partir de 184 votations tenues entre 1981 et 2002, les auteurs montrent des graphiquement des différences persistantes de mentalité dans les cantons et les communes de Suisse, ce qu'ils nomment "l'espace des visions du monde". En effet, davantage que des conflits politiques, ces votations permettent de saisir les lignes de fracture dans une société : pour une société libérale ou conservatrice, pour une protection des travailleurs ou des entreprises, pour une société écologique ou technocratique.
+A partir de 184 votations tenues entre 1982 et 2002, les auteurs montrent des graphiquement des différences persistantes de mentalité dans les cantons et les communes de Suisse, ce qu'ils nomment "l'espace des visions du monde". En effet, davantage que des conflits politiques, ces votations permettent de saisir les lignes de fracture dans une société : pour une société libérale ou conservatrice, pour une protection des travailleurs ou des entreprises, pour une société écologique ou technocratique.
 
 Aussi, sont dans un premier temps analysées ces votations afin d'en dégager ces lignes de fracture. Les auteurs ont recours pour cela à une analyse factorielle, avec l'idée que si l'on trouve un certain nombre de votations avec une répartition similaire des votes favorables, ils représentent une ligne de conflit politique ou un facteur. Tout autre groupe de votes qui ont un degré élevé d'accord entre eux, mais qui sont incompatibles avec les facteurs déjà trouvés, donne un facteur supplémentaire. On arrive ainsi par cette analyse factorielle à identifier les lignes de fracture sociétales. 
 
