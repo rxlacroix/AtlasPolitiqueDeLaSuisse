@@ -1,6 +1,6 @@
 ---
 title: "Paysage politique suisse"
-date: "11 décembre 2017"
+date: "11 decembre 2017"
 output:
   html_document: default
   pdf_document: default
@@ -12,33 +12,38 @@ output:
 ## Introduction
 
 
-On s'attache ici à reproduire la cartographie du paysage politique suisse réalisée par Hermann et Lautheld (2003), dans leur 
-*Atlas der politischen Landschaften – Ein weltanschauliches Porträt der Schweiz*. 
+On s'attache ici a reproduire la cartographie du paysage politique suisse realisee par Hermann et Lautheld (2003), dans leur 
+*Atlas der politischen Landschaften : Ein weltanschauliches Portrat der Schweiz*. 
 
-A partir de 184 votations tenues entre 1982 et 2002, les auteurs montrent des graphiquement des différences persistantes de mentalité dans les cantons et les communes de Suisse, ce qu'ils nomment "l'espace des visions du monde". En effet, davantage que des conflits politiques, ces votations permettent de saisir les lignes de fracture dans une société : pour une société libérale ou conservatrice, pour une protection des travailleurs ou des entreprises, pour une société écologique ou technocratique.
+A partir de 184 votations tenues entre 1982 et 2002, les auteurs montrent des graphiquement des differences persistantes de mentalite dans les cantons et les communes de Suisse, ce qu'ils nomment "l'espace des visions du monde". En effet, davantage que des conflits politiques, ces votations permettent de saisir les lignes de fracture dans une societe : pour une societe liberale ou conservatrice, pour une protection des travailleurs ou des entreprises, pour une societe ecologique ou technocratique.
 
-Aussi, sont dans un premier temps analysées ces votations afin d'en dégager ces lignes de fracture. Les auteurs ont recours pour cela à une analyse factorielle, avec l'idée que si l'on trouve un certain nombre de votations avec une répartition similaire des votes favorables, ils représentent une ligne de conflit politique ou un facteur. Tout autre groupe de votes qui ont un degré élevé d'accord entre eux, mais qui sont incompatibles avec les facteurs déjà trouvés, donne un facteur supplémentaire. On arrive ainsi par cette analyse factorielle à identifier les lignes de fracture sociétales. 
+Aussi, sont dans un premier temps analysees ces votations afin d'en degager ces lignes de fracture. Les auteurs ont recours pour cela a une analyse factorielle, avec l'idee que si l'on trouve un certain nombre de votations avec une repartition similaire des votes favorables, ils representent une ligne de conflit politique ou un facteur. Tout autre groupe de votes qui ont un degre eleve d'accord entre eux, mais qui sont incompatibles avec les facteurs deja trouves, donne un facteur supplementaire. On arrive ainsi par cette analyse factorielle a identifier les lignes de fracture societales. 
 
-Ensuite, avec une méthode à base d'estimation de densité par les noyaux explicitée par la suite, on peut réaliser une cartographie factorielle de ces résultats.
+Ensuite, avec une methode a base d'estimation de densite par les noyaux explicitee par la suite, on peut realiser une cartographie factorielle de ces resultats.
 
-## Mise en forme des données
+## Mise en forme des donnees
 
-Les paquets R suivants vont nous être utiles :
+Les paquets R suivants vont nous etre utiles :
 
 ```{r message=FALSE}
-library(FactoMineR)
-library(factoextra)
-library(stringi)
-library(psych)
-library(REdaS)
-library(knitr)
-library(reshape2)
+require(FactoMineR)
+require(factoextra)
+require(stringi)
+require(psych)
+require(REdaS)
+require(knitr)
+require(reshape2)
+require(spatialEco)
+require(sp)
+require(raster)
+require(RColorBrewer)
+
 ```
 
 
-On commence par récupérer les données des votations qui peuvent être extraites depuis : <https://www.bfs.admin.ch/bfs/fr/home/statistiques/politique/votations.assetdetail.3362356.html>
+On commence par recuperer les donnees des votations qui peuvent etre extraites depuis : <https://www.bfs.admin.ch/bfs/fr/home/statistiques/politique/votations.assetdetail.3362356.html>
 
-Après mise en forme correcte, on charge les données : 
+Apres mise en forme correcte, on charge les donnees : 
 
 ```{r}
 data <- read.csv("votations.csv", header = TRUE, sep = ";", encoding = "latin1")
@@ -59,67 +64,67 @@ data <- data[,order(as.Date(substr(colnames(data),1, 10),
                             format="%d.%m.%Y"))] # trie les colonnes par date
 ```
 
-Notre tableau de données ressemble à cela : 
+Notre tableau de donnees ressemble a cela : 
 
 ```{r}
 head(data[,1:5])
 ```
 
-Alors maintenant on effectue une partition de manière à ne garder que les votations effectivement considérées par Hermann et Leuthold (2003), comme les colonnes sont maintenant triées par date, c'est très simple :
+Alors maintenant on effectue une partition de maniere a ne garder que les votations effectivement considerees par Hermann et Leuthold (2003), comme les colonnes sont maintenant triees par date, c'est tres simple :
 
 ```{r}
 data_old <- data[,4:187]
 ```
 
-## Préparation de l'analyse factorielle
+## Preparation de l'analyse factorielle
 
-Pour commencer, explorons un peu nos données : dans un premier temps, les votes sont comparés par paires. 
+Pour commencer, explorons un peu nos donnees : dans un premier temps, les votes sont compares par paires. 
 
-Prenons par exemple le vote sur l'adhésion de l'ONU (2002) et le vote sur la facilitation de la naturalisation des jeunes étrangers (1994) : 
+Prenons par exemple le vote sur l'adhesion de l'ONU (2002) et le vote sur la facilitation de la naturalisation des jeunes etrangers (1994) : 
 
 
 ```{r, out.width = '\\maxwidth'}
-plot(data$`03.03.2002.Adhésion.de.la.Suisse.à.l.ONU`, 
-     data$`12.06.1994.Naturalisation.facilitée.pour.les.jeunes.étrangers`, 
-     xlab = "Adhésion à l'ONU (2002)", 
-     ylab = "Naturalisation facilitée pour les jeunes étrangers (1994)", 
+plot(data$`03.03.2002.Adh�sion.de.la.Suisse.�.l.ONU`, 
+     data$`12.06.1994.Naturalisation.facilit�e.pour.les.jeunes.�trangers`, 
+     xlab = "Adhesion a l'ONU (2002)", 
+     ylab = "Naturalisation facilitee pour les jeunes etrangers (1994)", 
      xlim=c(0,100), ylim=c(0,100))
 
 ```
 
-On voit qu'il existe un lien positif entre le oui pour l'adhésion à l'ONU et pour "faciliter la naturalisation des jeunes étrangers". En règle générale, cela veut dire que plus une commune est favorable à la "facilitation de la naturalisation", plus elle est favorable à une adhésion à l'ONU. 
+On voit qu'il existe un lien positif entre le oui pour l'adhesion a l'ONU et pour "faciliter la naturalisation des jeunes etrangers". En regle generale, cela veut dire que plus une commune est favorable a la "facilitation de la naturalisation", plus elle est favorable a une adhesion a l'ONU. 
 
-Prenons un autre exemple, l'approbation de la facilitation de la naturalisation des jeunes étrangers (1994) et l'approbation du projet contre l'immigration clandestine (1996) :  
+Prenons un autre exemple, l'approbation de la facilitation de la naturalisation des jeunes etrangers (1994) et l'approbation du projet contre l'immigration clandestine (1996) :  
 
 ```{r, out.width = '\\maxwidth'}
 plot(data$`01.12.1996.Contre.l.immigration.clandestine`, 
-     data$`12.06.1994.Naturalisation.facilitée.pour.les.jeunes.étrangers`, 
+     data$`12.06.1994.Naturalisation.facilit�e.pour.les.jeunes.�trangers`, 
      xlab = "Contre l'immigration clandestine (1996)", 
-     ylab = "Naturalisation facilitée pour les jeunes étrangers (1994)", 
+     ylab = "Naturalisation facilitee pour les jeunes etrangers (1994)", 
      xlim=c(0,100), ylim=c(0,100))
 
 ```
 
 
-Ici, en revanche, la figure montre une corrélation négative : plus l'approbation de "la naturalisation facilitée" est élevée, plus l'approbation de la "limitation de la proportion d'étrangers" est faible. 
+Ici, en revanche, la figure montre une correlation negative : plus l'approbation de "la naturalisation facilitee" est elevee, plus l'approbation de la "limitation de la proportion d'etrangers" est faible. 
 
-Voyons un dernier cas de figure avec la comparaison de l'interdiction de l'expérimentation animale (1992) et la facilitation de la naturalisation des jeunes étrangers (1994) : 
+Voyons un dernier cas de figure avec la comparaison de l'interdiction de l'experimentation animale (1992) et la facilitation de la naturalisation des jeunes etrangers (1994) : 
 
 ```{r, out.width = '\\maxwidth'}
-plot(data$`16.02.1992.Initiative.contre.l.expérimentation.animale`, 
-     data$`12.06.1994.Naturalisation.facilitée.pour.les.jeunes.étrangers`, 
-     xlab = "Initiative contre l'expérimentation animale (1992)", 
-     ylab = "Naturalisation facilitée pour les jeunes étrangers (1994)", 
+plot(data$`16.02.1992.Initiative.contre.l.exp�rimentation.animale`, 
+     data$`12.06.1994.Naturalisation.facilit�e.pour.les.jeunes.�trangers`, 
+     xlab = "Initiative contre l'experimentation animale (1992)", 
+     ylab = "Naturalisation facilitee pour les jeunes etrangers (1994)", 
      xlim=c(0,100), ylim=c(0,100))
 
 ```
 
 
-La figure montre qu'au niveau des communes, il n'y a pas de lien particulier entre l'approbation de l'interdiction de l'expérimentation animale et l'approbation de la facilitation de la naturalisation.
+La figure montre qu'au niveau des communes, il n'y a pas de lien particulier entre l'approbation de l'interdiction de l'experimentation animale et l'approbation de la facilitation de la naturalisation.
 
 
 
-Plus généralement, on compare les 184 votations deux à deux à l'aide d'une matrice de corrélation :
+Plus generalement, on compare les 184 votations deux a deux a l'aide d'une matrice de correlation :
 
 ```{r}
 c <-cor(data_old)
@@ -137,7 +142,7 @@ kmo$MSA
 
 Farpait.
 
-On fait ensuite le test de sphéricité de Bartlett pour vérifier que les variables ne sont pas issues d'une population dont la matrice est l'identité, ce qui traduirait une absence totale de corrélation ente les variables, et dans ce cas une analyse des composantes principales n'aurait donc pas d'intérêt.
+On fait ensuite le test de sphericite de Bartlett pour verifier que les variables ne sont pas issues d'une population dont la matrice est l'identite, ce qui traduirait une absence totale de correlation ente les variables, et dans ce cas une analyse des composantes principales n'aurait donc pas d'interet.
 
 ```{r}
 bart_spher(data_old)
@@ -145,12 +150,12 @@ bart_spher(data_old)
 ```
 
 
-Avec un p-value telle que celle-ci, on peut rejeter l'hypothèse (nulle) selon laquelle notre matrice des corrélations est déterminée à partir d’une population dont la matrice est identité. Ainsi, une ACP semble être pertinente.
+Avec un p-value telle que celle-ci, on peut rejeter l'hypothese (nulle) selon laquelle notre matrice des correlations est determinee a partir d'une population dont la matrice est identite. Ainsi, une ACP semble etre pertinente.
 
 
 ## Analyse en composantes principales
 
-__ATTENTION !!! A ce stade, nous avons suivi une analyse scientifique classique où nous passions "naïvement" par différentes étapes. Dans l'étape suivante, la calibration de l'ACP a été réalisée de manière à obtenir les résultats les plus proches de ceux récoltés par Hermann et Leuthold (2003) dans l'idée de pouvoir réaliser une cartographie qui soit similaire par la suite. Les résultats ne sont donc pas les meilleurs ni les plus adaptés, ce sont ceux qui nous permettent de poursuivre plus facilement notre interprétation de la méthode employée par les auteurs originaux. La plupart des commentaires "politiques" sont des reprises des originaux__
+__ATTENTION !!! A ce stade, nous avons suivi une analyse scientifique classique où nous passions "naïvement" par differentes etapes. Dans l'etape suivante, la calibration de l'ACP a ete realisee de maniere a obtenir les resultats les plus proches de ceux recoltes par Hermann et Leuthold (2003) dans l'idee de pouvoir realiser une cartographie qui soit similaire par la suite. Les resultats ne sont donc pas les meilleurs ni les plus adaptes, ce sont ceux qui nous permettent de poursuivre plus facilement notre interpretation de la methode employee par les auteurs originaux. La plupart des commentaires "politiques" sont des reprises des originaux__
 
 On utilise le package "psych" avec une rotation varimax.
 
@@ -170,13 +175,13 @@ round(p$Vaccounted,2)
 ```{r}
 plot(100*acp$values/sum(acp$values),
      xlim = c(1,8), ylim = c(0,30), 
-     xlab = "Composante", ylab = "% de variance expliquée", 
+     xlab = "Composante", ylab = "% de variance expliquee", 
      type = "b", las=1)
 ```
 
-Avec les trois premières composantes, on est seulement à 52,69% de variance expliquée. Il s'agit pourtant de l'ACP pour laquelle les résultats coïncident le mieux avec ceux du livre.
+Avec les trois premieres composantes, on est seulement a 52,69% de variance expliquee. Il s'agit pourtant de l'ACP pour laquelle les resultats coïncident le mieux avec ceux du livre.
 
-On doit à présent regarder les différentes composantes obtenues : 
+On doit a present regarder les differentes composantes obtenues : 
 ```{r}
 kable(acp$loadings[,c(3,1,2)], digits=4)
 ```
@@ -184,7 +189,7 @@ kable(acp$loadings[,c(3,1,2)], digits=4)
 ### Gauche-droite
 
 
-L'opposition "gauche-droite" correspond au à la troisème composante (RC3) qui, selon l'analyse factorielle, est le mieux représentée par les 20 votes du tableau ci-dessous. Les votes sont rangés en fonction de l'intensité avec laquelle ils déterminent la ligne de fracture.
+L'opposition "gauche-droite" correspond au a la troiseme composante (RC3) qui, selon l'analyse factorielle, est le mieux representee par les 20 votes du tableau ci-dessous. Les votes sont ranges en fonction de l'intensite avec laquelle ils determinent la ligne de fracture.
 
 ```{r, results=FALSE, message=FALSE}
 p <- print(ICLUST.sort(acp$loadings))
@@ -198,15 +203,15 @@ kable(resultRC3)
 ```
 
 
-Comme l'indique la liste, le premier conflit concerne principalement l'Etat-providence et la protection des travailleurs. D'un côté de la ligne de conflit, il y a une attitude qui cherche à améliorer la situation des travailleurs et à élargir les services de l'Etat providence. De l'autre, il y a au contraire le souci de réduire les coûts de l'Etat-providence et de protéger les intérêts des employeurs.
+Comme l'indique la liste, le premier conflit concerne principalement l'Etat-providence et la protection des travailleurs. D'un côte de la ligne de conflit, il y a une attitude qui cherche a ameliorer la situation des travailleurs et a elargir les services de l'Etat providence. De l'autre, il y a au contraire le souci de reduire les coûts de l'Etat-providence et de proteger les interets des employeurs.
 
-Outre la politique sociale, un deuxième groupe de thèmes est fortement représenté dans le tableau. Il s'agit de propositions sur la politique de sécurité (par exemple,  "Suisse sans armée" ou "40 places d'armes suffisent"). Lors des votations, ces sujets montrent un degré élevé d'accord avec les questions sociopolitiques. Il montre qu'une attitude "sociale" est généralement associée à une attitude "pacifiste". D'autre part, les valeurs contraires coincident donc avec une attitude positive envers les autorités de sécurité, l'armée et la police.
+Outre la politique sociale, un deuxieme groupe de themes est fortement represente dans le tableau. Il s'agit de propositions sur la politique de securite (par exemple,  "Suisse sans armee" ou "40 places d'armes suffisent"). Lors des votations, ces sujets montrent un degre eleve d'accord avec les questions sociopolitiques. Il montre qu'une attitude "sociale" est generalement associee a une attitude "pacifiste". D'autre part, les valeurs contraires coincident donc avec une attitude positive envers les autorites de securite, l'armee et la police.
 
-### Libéral-conservateur
+### Liberal-conservateur
 
-Lorsque le débat sur l'Europe a commencé en Suisse au début des années 1990, il est apparu que la société ne pouvait pas seulement être divisée entre la gauche et la droite. En ce qui concerne le vote sur l'Espace Economique Européen de 1992, des coalitions se sont formées et ont rassemblé des mouvements de gauche avec des mouvements de droite.
+Lorsque le debat sur l'Europe a commence en Suisse au debut des annees 1990, il est apparu que la societe ne pouvait pas seulement etre divisee entre la gauche et la droite. En ce qui concerne le vote sur l'Espace Economique Europeen de 1992, des coalitions se sont formees et ont rassemble des mouvements de gauche avec des mouvements de droite.
 
-L'ACP confirme cette constatation : les propositions d'intégration de la Suisse dans la communauté internationale (UE, ONU, Banque mondiale, etc.) ne se situent pas sur la ligne de conflit gauche-droite, mais forment un groupe indépendant. Le tableau ci-dessous montre les 25 votes qui décrivent le mieux cette deuxième fracture (RC1).
+L'ACP confirme cette constatation : les propositions d'integration de la Suisse dans la communaute internationale (UE, ONU, Banque mondiale, etc.) ne se situent pas sur la ligne de conflit gauche-droite, mais forment un groupe independant. Le tableau ci-dessous montre les 25 votes qui decrivent le mieux cette deuxieme fracture (RC1).
 
 ```{r, results=FALSE, message=FALSE}
 resultRC1 <-melt(data.frame(p$content[71:95],p$RC1[71:95]))
@@ -218,14 +223,14 @@ colnames(resultRC1) <- c("Votation","loading")
 kable(resultRC1)
 ```
 
-La deuxième ligne de conflit contient également les votations sur l'intégration des étrangers, telles que la "naturalisation facilitée des jeunes étrangers" ou la "loi antiracisme". Dans un certain sens, les propositions d'intégration sont aussi des propositions d'ouverture, même il ne s'agit que d'une ouverture à l'intérieur. Le deuxième conflit fondamental est donc un conflit entre cosmopolitisme et la fermeture des frontières. Mais c'est aussi un conflit de modernisation et de préservation. Les propositions de modernisation ont un but. Simplifier les procédures, améliorer les règlementations et les adapter aux exigences d'une société en mutation. Les propositions de modernisation typiques sont la nouvelle Constitution fédérale, l'introduction de la TVA ou une réforme parlementaire.
+La deuxieme ligne de conflit contient egalement les votations sur l'integration des etrangers, telles que la "naturalisation facilitee des jeunes etrangers" ou la "loi antiracisme". Dans un certain sens, les propositions d'integration sont aussi des propositions d'ouverture, meme il ne s'agit que d'une ouverture a l'interieur. Le deuxieme conflit fondamental est donc un conflit entre cosmopolitisme et la fermeture des frontieres. Mais c'est aussi un conflit de modernisation et de preservation. Les propositions de modernisation ont un but. Simplifier les procedures, ameliorer les reglementations et les adapter aux exigences d'une societe en mutation. Les propositions de modernisation typiques sont la nouvelle Constitution federale, l'introduction de la TVA ou une reforme parlementaire.
 
-La combinaison des deux groupes de questions sur la deuxième ligne de clivage montre que quiconque prône l'ouverture du pays vise également la modernisation des institutions de l'Etat. D'autre part, ceux qui voient la necessite d'une plus grande fermeture des frontières veulent surtout préserver la règlementation existante. Les auteurs se réfèrent à l'attitude cosmopolitiste-moderne contre l'attitude de enfermement-préservation, ou plus simplement, libérale contre conservatrice.
+La combinaison des deux groupes de questions sur la deuxieme ligne de clivage montre que quiconque prône l'ouverture du pays vise egalement la modernisation des institutions de l'Etat. D'autre part, ceux qui voient la necessite d'une plus grande fermeture des frontieres veulent surtout preserver la reglementation existante. Les auteurs se referent a l'attitude cosmopolitiste-moderne contre l'attitude de enfermement-preservation, ou plus simplement, liberale contre conservatrice.
 
 
 ### Ecologisme vs technocratisme
 
-Une une troisième ligne de fracture distincte qui est communément associée à une opposition de gauche-droite est révelée  : elle concerne la question de savoir comment évaluer l'interférence humaine avec la nature. Dans ce contexte, le souci d'une approche prudente et holistique de la nature, opposé à sa maîtrise technique et son utilisation sont opposés. La liste des votes qui déterminent ce troisième conflit montre une large gamme thématique ; ce sont des votations sur le transport et la protection de l'environnement, mais aussi des votes sur l'agriculture, le bien-être animal et le génie génétique.
+Une une troisieme ligne de fracture distincte qui est communement associee a une opposition de gauche-droite est revelee  : elle concerne la question de savoir comment evaluer l'interference humaine avec la nature. Dans ce contexte, le souci d'une approche prudente et holistique de la nature, oppose a sa maîtrise technique et son utilisation sont opposes. La liste des votes qui determinent ce troisieme conflit montre une large gamme thematique ; ce sont des votations sur le transport et la protection de l'environnement, mais aussi des votes sur l'agriculture, le bien-etre animal et le genie genetique.
 
 ```{r, results=FALSE, message=FALSE}
 resultRC2 <-melt(data.frame(p$content[1:20],p$RC2[1:20]))
@@ -240,17 +245,17 @@ kable(resultRC2)
 ## "L'espace des visions du monde"
 
 
-Les lignes de conflit politiques révélées par l'ACP donnent une idée précise des valeurs fondamentales divergentes en Suisse. Les conflits d'attitude fondamentaux qui existent dans la société sont beaucoup plus divers que dans la politique institutionnelle, où les partis et leurs représentants peuvent encore être classés dans un large éventail de gauche à droite. Alors que le conflit entre une orientation libarale et une orientation conservatrice est devenu de plus en plus visible dans le paysage des partis au cours de la dernière décennie, le contraste entre l'écologie et la technocratie en politique n'est guère considéré comme une ligne de conflit indépendante. (*NDE : écrit en 2003, aujourd'hui, un peu plus*)
+Les lignes de conflit politiques revelees par l'ACP donnent une idee precise des valeurs fondamentales divergentes en Suisse. Les conflits d'attitude fondamentaux qui existent dans la societe sont beaucoup plus divers que dans la politique institutionnelle, où les partis et leurs representants peuvent encore etre classes dans un large eventail de gauche a droite. Alors que le conflit entre une orientation libarale et une orientation conservatrice est devenu de plus en plus visible dans le paysage des partis au cours de la derniere decennie, le contraste entre l'ecologie et la technocratie en politique n'est guere considere comme une ligne de conflit independante. (*NDE : ecrit en 2003, aujourd'hui, un peu plus*)
 
 
-L'espace tridimensionnel des visions du monde couvre les attitudes de base typiques de la Suisse. Bien que statistiquement parlant, les trois dimensions de l'espace pour les différences dans les résultats des votes soient à peu près équivalentes, l'accent ne sera mis que sur les deux dimensions gauche-droite et libéral-conservateur.
+L'espace tridimensionnel des visions du monde couvre les attitudes de base typiques de la Suisse. Bien que statistiquement parlant, les trois dimensions de l'espace pour les differences dans les resultats des votes soient a peu pres equivalentes, l'accent ne sera mis que sur les deux dimensions gauche-droite et liberal-conservateur.
 
-Il y a d'abord des raisons pratiques à cela : une carte ne peut afficher qu'un seul plan étiré entre deux dimensions. Cependant, il y a aussi une raison substantielle : le contraste entre écologique et technocratique est avant tout un conflit entre la partie française et la partie allemande du pays et est moins significatif pour l'analyse intrarégionale.
+Il y a d'abord des raisons pratiques a cela : une carte ne peut afficher qu'un seul plan etire entre deux dimensions. Cependant, il y a aussi une raison substantielle : le contraste entre ecologique et technocratique est avant tout un conflit entre la partie francaise et la partie allemande du pays et est moins significatif pour l'analyse intraregionale.
 
 # Cartographie
 
-### Coordonnées : dimensions
-Maintenant que notre ACP a été réalisée et nos facteurs retenus, on attribue à chaque commune son score factoriel.
+### Coordonnees : dimensions
+Maintenant que notre ACP a ete realisee et nos facteurs retenus, on attribue a chaque commune son score factoriel.
 
 ```{r}
 scores <- as.data.frame(acp$scores) 
@@ -258,31 +263,31 @@ scores <- as.data.frame(acp$scores)
 head(scores)
 ```
 
-De cette façon, on peut cartographier les communes suisses sur la base des votes qu'elles ont réalisées dans notre espace à deux dimensions, RC1 pour l'axe y et -RC3 (on prend l'opposé de façon à avoir la gauche à gauche) pour l'axe x : 
+De cette facon, on peut cartographier les communes suisses sur la base des votes qu'elles ont realisees dans notre espace a deux dimensions, RC1 pour l'axe y et -RC3 (on prend l'oppose de facon a avoir la gauche a gauche) pour l'axe x : 
 
 ```{r}
 par(pty="s")
 plot(-scores$RC3, scores$RC1, xlab = "", ylab = "", xaxt='n', yaxt="n", pch=10, cex=.3)
 mtext('Droite', side=4, line=2, las=1)
 mtext('Gauche', side=2, line=2, las=1)
-mtext("Libéral", side =3, line=1)
+mtext("Liberal", side =3, line=1)
 mtext("Conservateur", side =1, line=1)
 ```
 
 ### Poids : population
 
-Maintenant que nous avons nos coordonnées spatiales, on veut attribuer un poids à ces entités afin de pouvoir réaliser par la suite des estimations de surfaces de densité par noyaux. 
+Maintenant que nous avons nos coordonnees spatiales, on veut attribuer un poids a ces entites afin de pouvoir realiser par la suite des estimations de surfaces de densite par noyaux. 
 
-On a récupéré un fichier des communes suisses avec le nombre d'habitants, il s'agit maintenant de fusionner ces deux tableaux de données:
+On a recupere un fichier des communes suisses avec le nombre d'habitants, il s'agit maintenant de fusionner ces deux tableaux de donnees:
 
 ```{r, message=FALSE}
 
-communes <- read.csv("communes.csv")
+communes <- read.csv2("communes.csv", encoding = "utf-8")
 communes$Habitants <- as.numeric(gsub('![[:alnum:]]*[[:space:]]|[[:punct:]]', '', communes$Habitants))
 communes$Commune  <- gsub('-', ' ', communes$Commune)
 ```
 
-Les opérations précédentes ont pas mal abîmé les noms des communes, on réalise donc un certain nombre de modifications textuelles :
+Les operations precedentes ont pas mal abîme les noms des communes, on realise donc un certain nombre de modifications textuelles :
 
 ```{r, message=FALSE}
 scores$Commune <- row.names(scores)
@@ -312,7 +317,7 @@ On peut alors fusionner les deux fichiers :
 scores <- merge(scores, communes, by= "Commune")
 ```
 
-Et on garde ce qui est nécessaire :
+Et on garde ce qui est necessaire :
 
 ```{r, message=FALSE}
 
@@ -321,7 +326,7 @@ scores <- scores[,1:6]
 
 ### Couleur : langue
 
-L'analyse politique suisse est évidemment géolinguistique : on doit donc retrouver ces langues dans nos données. Pour cela on se sert du code géographique qui est fonction des cantons et districts.
+L'analyse politique suisse est evidemment geolinguistique : on doit donc retrouver ces langues dans nos donnees. Pour cela on se sert du code geographique qui est fonction des cantons et districts.
 
 ```{r, message=FALSE}
 scores$langue <- ""
@@ -351,111 +356,117 @@ scores$Colour[scores$langue == "ALL"]="#5DE100"
 scores$Colour[scores$langue == "ITA"]="#FFBC00"
 ```
 
-Et visualiser le résultat intermédiaire :
+Et visualiser le resultat intermediaire :
 
 ```{r, message=FALSE}
 par(pty="s")
 plot(-scores$RC3, scores$RC1, xlab = "", ylab = "", xaxt='n', yaxt="n", cex=sqrt(scores$Habitants/10000),pch=16, col=scores$Colour)
 mtext('Droite', side=4, line=2, las=1)
 mtext('Gauche', side=2, line=2, las=1)
-mtext("Libéral", side =3, line=1)
+mtext("Liberal", side =3, line=1)
 mtext("Conservateur", side =1, line=1)
 legend("bottomleft",col = c("#FF3D00","#5DE100","#FFBC00"), legend = c("FRA","ALL","ITA"),pch=16)
 ```
 
-Ce résultat est en soit déjà satisfaisant par bien des aspects. On veut toutefois reproduire le style "carte topographique" de l'original et on passe alors sur ArcGIS par commodité.
+Ce resultat est en soit deja satisfaisant par bien des aspects. On veut toutefois reproduire le style "carte topographique" de l'original et on passe alors sur ArcGIS par commodite.
 
-On exporte donc nos données afin de pouvoir les importer dans le SIG.
+On exporte donc nos donnees afin de pouvoir les importer dans le SIG.
 
 ```{r, message=FALSE}
-scores$RC3 <- -scores$RC3
+scores$RC3 <- -scores$RC3 # inversion des coordonn�es pour adaptation graphique logique
 write.csv(scores, "scores.csv")
+scores2 <- scores[,3:4]
 ```
 
-![](http://4.bp.blogspot.com/_kxyDjy3a1NI/SsQmk_n-ChI/AAAAAAAAA58/2xAssmTe0G0/s400/No+Open+Source.bmp)
 
 
-## ArcGIS
+## Estimation d'une surface de densite par noyaux
 
-On charge le fichier scores.csv dans ArcGIS
-![](https://image.prntscr.com/image/e2zGMfF6R7ao34JWEJdJmw.png)
-![](https://image.prntscr.com/image/FWPSCKwsSLCXrlhgmJZyJg.png)
+On passe d'abord les donn�es data.frame en spatiales : 
 
-Les données ne sont pas bien utilisables comme cela, il faut passer par la création d’une couche, on l’appelle tout à fait banalement scores.shp
-![](https://image.prntscr.com/image/hzq9XPMnRHalKIrhiFeZag.png)
+```{r, message=FALSE}
+coordinates(scores) <- ~ RC3 + RC1
+```
 
-### Estimation d’une surface de densité par noyaux
-
-On a d’abord besoin de calculer le rayon optimal de recherche. Pour obtenir ce search radius (bandwith), on peut reprendre la formule de Silverman (1986) :
+On a ensuite besoin de calculer le rayon optimal de recherche. Pour obtenir ce search radius (bandwith), on peut reprendre la formule de Silverman (1986) :
 
 $h = \left ( \frac{4\sigma ^{5}}{3n} \right )^{1/5} \approx 1.06\sigma n^{-1/5}$
 
-où $\sigma$ est l’écart-type des distances entre les points et $n$ le nombre d’observation.
+
+ou $\sigma$ est l'ecart-type des distances entre les points et $n$ le nombre d'observation.
 
 
-Pour obtenir cet écart-type, on fait un petit calcul :
+Pour obtenir cet ecart-type, on fait un petit calcul :
+
+```{r, message=FALSE}
+# centres moyens
+mc <- apply(scores2, 2, mean)
+# standard distance
+sd <- sqrt(sum((scores2[,1] - mc[1])^2 + (scores2[,2] - mc[2])^2) / nrow(scores2))
+h <-  ((4* (sd)^5)/(3*(nrow(scores2))))^(1/5)
 
 
-![](https://image.prntscr.com/image/kajxCG8wSaa-C3P-NRUzrg.png)
+```
 
 
-On peut mettre les poids en paramètres, et cela donne une distance (visible dans le tableau d’attribut de la couche circulaire créée) de 1.296668.
 
-Reprenant la formule de Silverberg, cela donne un h = 0.2955581.
-
-Ensuite, dans la Toolbox, on va chercher la fonction Kernel Density dans le package Spatial Analyst
+Ensuite, on peut utiliser la fonction de calcul de kde du package spatialEco
 
 
-![](https://image.prntscr.com/image/vfN2Z5VLSB6VjDUa1Mz73A.png)
+```{r, message=FALSE}
+kde <- sp.kde(scores, y= scores$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
+plot(kde)
+crs(kde) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" 
+```
 
 
-L’input est notre couche de points, la population est… la population soit les Habitants, la taille de la cellule est fixée à 0.0005 afin d’avoir une bonne résolution. 
+Un peu d'ajustement graphique sur la couche obtenue, notamment l'ombrage (hillshade) qui donne un aspect � carte topo �.
+
+```{r, message=FALSE}
+slope <- terrain(kde, opt='slope')
+aspect <- terrain(kde, opt='aspect')
+hill <- hillShade(slope, aspect, 45, 315)
+plot(hill, col=grey(0:100/100), legend=FALSE, main='Switzerland')
+```
 
 
-![](https://image.prntscr.com/image/ctqcUA-zQw_zb1mf_3J_Kg.png)
+
+Afin de determiner les zones linguistiques, on cree des partitions de nos scores en fonction de la langue (ALL, FRA et ITA).
+
+```{r, message=FALSE}
+scoresFRA <- subset(scores, scores$langue == 'FRA')
+scoresALL <- subset(scores, scores$langue == 'ALL')
+scoresITA <- subset(scores, scores$langue == 'ITA')
+```
 
 
-Un peu d’ajustement graphique sur la couche obtenue, notamment l’ombrage (hillshade) qui donne un aspect « carte topo ».
+On refait ensuite des KDE sur les points par langue de maniere a obtenir 3 nouveaux rasters.
+
+```{r, message=FALSE}
+kdeFRA <- sp.kde(scoresFRA, y= scoresFRA$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
+values(kdeFRA)[values(kdeFRA) <0.05] <- NA
+par(pty="s")
+plot(hill, col=grey(0:100/100), legend=FALSE, alpha = .5, xaxt="n",yaxt="n")
+plot(kdeFRA, col = brewer.pal(15, "Reds"),legend=FALSE, alpha = .6,add = TRUE)
+
+kdeALL <- sp.kde(scoresALL, y= scoresALL$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
+values(kdeALL)[values(kdeALL) <0.05] <- NA
+plot(kdeALL, col = brewer.pal(15, "Greens"), alpha = .6, legend=FALSE,add = TRUE)
+
+kdeITA <- sp.kde(scoresITA, y= scoresITA$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
+values(kdeITA)[values(kdeITA) <0.05] <- NA
+plot(kdeITA, col = brewer.pal(15, "YlOrBr"),alpha = .6, legend=FALSE, add = TRUE)
+mtext('Droite', side=4, line=2, las=1)
+mtext('Gauche', side=2, line=2, las=1)
+mtext("Liberal", side =3, line=1)
+mtext("Conservateur", side =1, line=1)
+legend("bottomleft",col = c("#FF3D00","#5DE100","#FFBC00"), legend = c("FRA","ALL","ITA"),pch=16)
+```
 
 
-![](https://image.prntscr.com/image/tad-qdXpSze-F5RuE3HJYQ.png)
-![](https://image.prntscr.com/image/EaDl5sZlTIC9_R8p-CPocg.png)
 
 
-Afin de déterminer les zones linguistiques, on crée des partitions de nos scores en fonction de la langue (ALL, FRA et ITA).
-
-
-![](https://image.prntscr.com/image/yiKI4_B7TWGi0_wAhJsBcw.png)
-![](https://image.prntscr.com/image/zb-KiVjkR6iBNnx3gT7Bow.png)
-
-
-Ce qui nous donne :
-
-
-![](https://image.prntscr.com/image/AMLsSmIfSrKortkN3lAjzA.png)
-
-
-On refait ensuite des KDE sur les points par langue de manière à obtenir 3 nouveaux rasters.
-
-Ensuite, pour obtenir les aires d’influence linguistique, on fait une soustraction entre ces rasters. 
-
-
-![](https://image.prntscr.com/image/JaDbjP2cQueGB_4aPYypfA.png)
-
-
-Après, optimisation graphique et de la sémiologie, on arrive à : 
-
-
-![](https://image.prntscr.com/image/Ri2a3pgORxiRPhNTc4C68g.png)
-
-
-Avec en rouge l’espace francophone et en vert l’espace germanophone.
-Comme on ne peut pas refaire une soustraction avec l’espace italophone, on le rajoute par-dessus en transparence. Ce qui donne :
-
-![](https://image.prntscr.com/image/sGXuO9qRTn29AFLghfR0Qg.png)
-
-
-On exporte en svg et on améliore cela sous Illustrator…
+On exporte en svg et on ameliore cela sous Illustrator:
 
 
 ![](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores.png?raw=true)
