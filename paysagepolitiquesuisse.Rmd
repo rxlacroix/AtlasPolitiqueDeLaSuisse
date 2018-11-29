@@ -282,7 +282,7 @@ On a recupere un fichier des communes suisses avec le nombre d'habitants, il s'a
 
 ```{r, message=FALSE}
 
-communes <- read.csv2("communes.csv", encoding = "utf-8")
+communes <- read.csv2("communes.csv", encoding = "Windows-1252")
 communes$Habitants <- as.numeric(gsub('![[:alnum:]]*[[:space:]]|[[:punct:]]', '', communes$Habitants))
 communes$Commune  <- gsub('-', ' ', communes$Commune)
 ```
@@ -444,30 +444,37 @@ On refait ensuite des KDE sur les points par langue de maniere a obtenir 3 nouve
 
 ```{r, message=FALSE}
 kdeFRA <- sp.kde(scoresFRA, y= scoresFRA$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
-values(kdeFRA)[values(kdeFRA) <0.05] <- NA
 par(pty="s")
-plot(hill, col=grey(0:100/100), legend=FALSE, alpha = .5, xaxt="n",yaxt="n")
-plot(kdeFRA, col = brewer.pal(15, "Reds"),legend=FALSE, alpha = .6,add = TRUE)
-
+plot(kdeFRA, xlim=c(-5, 5), ylim=c(-5, 5), col = c("#F5A780","#F28E6e","#EF765D","#EC5e4b","#E9463A","#E62E28","#E41617"),legend=FALSE )
+```
+```{r, message=FALSE}
 kdeALL <- sp.kde(scoresALL, y= scoresALL$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
-values(kdeALL)[values(kdeALL) <0.05] <- NA
-plot(kdeALL, col = brewer.pal(15, "Greens"), alpha = .6, legend=FALSE,add = TRUE)
-
+plot(kdeALL, xlim=c(-5, 5), ylim=c(-5, 5),col = c("#E8Ecb4","#C1DCA1","#9ACC8E","#74BC7C","#4DAC69","#269C56","#008c44"), legend=FALSE)
+```
+```{r, message=FALSE}
 kdeITA <- sp.kde(scoresITA, y= scoresITA$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
-values(kdeITA)[values(kdeITA) <0.05] <- NA
-plot(kdeITA, col = brewer.pal(15, "YlOrBr"),alpha = .6, legend=FALSE, add = TRUE)
-mtext('Droite', side=4, line=2, las=1)
-mtext('Gauche', side=2, line=2, las=1)
-mtext("Liberal", side =3, line=1)
-mtext("Conservateur", side =1, line=1)
+plot(kdeITA, xlim=c(-5, 5), ylim=c(-5, 5),col = c("#F4CD8E","#F7C074","#F2B058","#EC9C34"),legend=FALSE)
 legend("bottomleft",col = c("#FF3D00","#5DE100","#FFBC00"), legend = c("FRA","ALL","ITA"),pch=16)
+```
+
+Pour une meilleure visualisation, on exporte ça pour QGIS :
+
+```{r, message=FALSE}
+values(kde)[values(kde) <0.01] <- NA
+
+writeRaster(kde, "kde.tif", overwrite = TRUE)
+writeRaster(kdeFRA, "kdeFRA.tif", overwrite = TRUE)
+writeRaster(kdeALL, "kdeALL.tif", overwrite = TRUE)
+writeRaster(kdeITA, "kdeITA.tif", overwrite = TRUE)
+
 ```
 
 
 
+On visualise ça au mieux : 
 
-On exporte en svg et on ameliore cela sous Illustrator:
 
-
-![](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores.png?raw=true)
+![](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores_FRA.png?raw=true)
+![](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores_ALL.png?raw=true)
+![](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores_ITA.png?raw=true)
 
