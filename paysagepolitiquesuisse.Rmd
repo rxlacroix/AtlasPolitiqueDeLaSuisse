@@ -37,6 +37,7 @@ require(spatialEco)
 require(sp)
 require(raster)
 require(RColorBrewer)
+require(tidyverse)
 
 ```
 
@@ -84,8 +85,8 @@ Prenons par exemple le vote sur l'adhesion de l'ONU (2002) et le vote sur la fac
 
 
 ```{r, out.width = '\\maxwidth'}
-plot(data$`03.03.2002.Adhésion.de.la.Suisse.à.l.ONU`, 
-     data$`12.06.1994.Naturalisation.facilitée.pour.les.jeunes.étrangers`, 
+plot(data$`03.03.2002.AdhÃ©sion.de.la.Suisse.Ã .l.ONU`, 
+     data$`12.06.1994.Naturalisation.facilitÃ©e.pour.les.jeunes.Ã©trangers`, 
      xlab = "Adhesion a l'ONU (2002)", 
      ylab = "Naturalisation facilitee pour les jeunes etrangers (1994)", 
      xlim=c(0,100), ylim=c(0,100))
@@ -98,7 +99,7 @@ Prenons un autre exemple, l'approbation de la facilitation de la naturalisation 
 
 ```{r, out.width = '\\maxwidth'}
 plot(data$`01.12.1996.Contre.l.immigration.clandestine`, 
-     data$`12.06.1994.Naturalisation.facilitée.pour.les.jeunes.étrangers`, 
+     data$`12.06.1994.Naturalisation.facilitÃ©e.pour.les.jeunes.Ã©trangers`, 
      xlab = "Contre l'immigration clandestine (1996)", 
      ylab = "Naturalisation facilitee pour les jeunes etrangers (1994)", 
      xlim=c(0,100), ylim=c(0,100))
@@ -111,8 +112,8 @@ Ici, en revanche, la figure montre une correlation negative : plus l'approbation
 Voyons un dernier cas de figure avec la comparaison de l'interdiction de l'experimentation animale (1992) et la facilitation de la naturalisation des jeunes etrangers (1994) : 
 
 ```{r, out.width = '\\maxwidth'}
-plot(data$`16.02.1992.Initiative.contre.l.expérimentation.animale`, 
-     data$`12.06.1994.Naturalisation.facilitée.pour.les.jeunes.étrangers`, 
+plot(data$`16.02.1992.Initiative.contre.l.expÃ©rimentation.animale`, 
+     data$`12.06.1994.Naturalisation.facilitÃ©e.pour.les.jeunes.Ã©trangers`, 
      xlab = "Initiative contre l'experimentation animale (1992)", 
      ylab = "Naturalisation facilitee pour les jeunes etrangers (1994)", 
      xlim=c(0,100), ylim=c(0,100))
@@ -282,7 +283,7 @@ On a recupere un fichier des communes suisses avec le nombre d'habitants, il s'a
 
 ```{r, message=FALSE}
 
-communes <- read.csv2("communes.csv", encoding = "Windows-1252")
+communes <- read.csv2("communes.csv", encoding = "latin1")
 communes$Habitants <- as.numeric(gsub('![[:alnum:]]*[[:space:]]|[[:punct:]]', '', communes$Habitants))
 communes$Commune  <- gsub('-', ' ', communes$Commune)
 ```
@@ -346,6 +347,13 @@ scores$langue[scores$Code.commune >6120 & scores$Code.commune < 6160] <- "FRA"
 scores$langue[scores$Code.commune >6160 & scores$Code.commune < 6210] <- "ALL"
 scores$langue[scores$Code.commune >6210 & scores$Code.commune < 6270] <- "FRA"
 scores$langue[scores$Code.commune >6270 & scores$Code.commune < 6301] <- "ALL"
+
+jurabernoisFRA <- c(681,683,687,431,432,433,690,434,691,692,694,435,723,696,437,700,724,438,701,450,716,726,715,703,441,704,442,706,443,449,707,444,445,711,713,446,717,448)
+MoesaBernina <- c(3804,3837,3831,3805,3832,3821,3822,3808,3834,3835,3823,3810,3551,3561,3531,3792)
+
+scores$langue[scores$Code.commune %in% jurabernoisFRA] <- "FRA"
+scores$langue[scores$Code.commune %in% MoesaBernina] <- "ITA"
+
 ```
 
 On peut alors attribuer les couleurs :
@@ -373,7 +381,7 @@ Ce resultat est en soit deja satisfaisant par bien des aspects. On veut toutefoi
 On exporte donc nos donnees afin de pouvoir les importer dans le SIG.
 
 ```{r, message=FALSE}
-scores$RC3 <- -scores$RC3 # inversion des coordonnées pour adaptation graphique logique
+scores$RC3 <- -scores$RC3 # inversion des coordonn?es pour adaptation graphique logique
 write.csv(scores, "scores.csv")
 scores2 <- scores[,3:4]
 ```
@@ -382,7 +390,7 @@ scores2 <- scores[,3:4]
 
 ## Estimation d'une surface de densite par noyaux
 
-On passe d'abord les données data.frame en spatiales : 
+On passe d'abord les donn?es data.frame en spatiales : 
 
 ```{r, message=FALSE}
 coordinates(scores) <- ~ RC3 + RC1
@@ -403,7 +411,7 @@ Pour obtenir cet ecart-type, on fait un petit calcul :
 mc <- apply(scores2, 2, mean)
 # standard distance
 sd <- sqrt(sum((scores2[,1] - mc[1])^2 + (scores2[,2] - mc[2])^2) / nrow(scores2))
-h <-  ((4* (sd)^5)/(3*(nrow(scores2))))^(1/5)
+h <-  1.06*sd*(2162^(-0.2))
 
 
 ```
@@ -414,13 +422,14 @@ Ensuite, on peut utiliser la fonction de calcul de kde du package spatialEco
 
 
 ```{r, message=FALSE}
-kde <- sp.kde(scores, y= scores$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
+kde <- sp.kde(scores, y= scores$Habitants, bw = h*2, newdata = c(-5,5,-5,5), n= 1000)
 plot(kde)
 crs(kde) <- "+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0" 
 ```
 
+En rÃ©alitÃ©, ici 2*h est bien meilleur que h, du coup on va garder Ã§a pour la visu.
 
-Un peu d'ajustement graphique sur la couche obtenue, notamment l'ombrage (hillshade) qui donne un aspect « carte topo ».
+Un peu d'ajustement graphique sur la couche obtenue, notamment l'ombrage (hillshade) qui donne un aspect carte topo.
 
 ```{r, message=FALSE}
 slope <- terrain(kde, opt='slope')
@@ -443,21 +452,21 @@ scoresITA <- subset(scores, scores$langue == 'ITA')
 On refait ensuite des KDE sur les points par langue de maniere a obtenir 3 nouveaux rasters.
 
 ```{r, message=FALSE}
-kdeFRA <- sp.kde(scoresFRA, y= scoresFRA$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
+kdeFRA <- sp.kde(scoresFRA, y= scoresFRA$Habitants, bw = h*2, newdata = c(-5,5,-5,5), n= 1000)
 par(pty="s")
 plot(kdeFRA, xlim=c(-5, 5), ylim=c(-5, 5), col = c("#F5A780","#F28E6e","#EF765D","#EC5e4b","#E9463A","#E62E28","#E41617"),legend=FALSE )
 ```
 ```{r, message=FALSE}
-kdeALL <- sp.kde(scoresALL, y= scoresALL$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
+kdeALL <- sp.kde(scoresALL, y= scoresALL$Habitants, bw = h*2, newdata = c(-5,5,-5,5), n= 1000)
 plot(kdeALL, xlim=c(-5, 5), ylim=c(-5, 5),col = c("#E8Ecb4","#C1DCA1","#9ACC8E","#74BC7C","#4DAC69","#269C56","#008c44"), legend=FALSE)
 ```
 ```{r, message=FALSE}
-kdeITA <- sp.kde(scoresITA, y= scoresITA$Habitants, bw = 0.66, newdata = c(-5,5,-5,5), n= 1000)
+kdeITA <- sp.kde(scoresITA, y= scoresITA$Habitants, bw = h*2, newdata = c(-5,5,-5,5), n= 1000)
 plot(kdeITA, xlim=c(-5, 5), ylim=c(-5, 5),col = c("#F4CD8E","#F7C074","#F2B058","#EC9C34"),legend=FALSE)
 legend("bottomleft",col = c("#FF3D00","#5DE100","#FFBC00"), legend = c("FRA","ALL","ITA"),pch=16)
 ```
 
-Pour une meilleure visualisation, on exporte ça pour QGIS :
+Pour une meilleure visualisation, on exporte Ã§a pour QGIS :
 
 ```{r, message=FALSE}
 values(kde)[values(kde) <0.01] <- NA
@@ -471,10 +480,12 @@ writeRaster(kdeITA, "kdeITA.tif", overwrite = TRUE)
 
 
 
-On visualise ça au mieux : 
+On visualise Ã§a au mieux : 
 
-
+Zone francophone : 
 ![](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores_FRA.png?raw=true)
+Zone Germanophone
 ![](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores_ALL.png?raw=true)
+Zone italophone
 ![](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores_ITA.png?raw=true)
 
