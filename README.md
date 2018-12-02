@@ -8,7 +8,7 @@ L'objectif était de recréer l'infographie de Hermann et Leuthold (2003) de leu
 ![alt text](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores.png?raw=true)
 
 
-R et ArcGIS sont nécessaires
+R (et QGIS) sont nécessaires
 
 
 Méthode consultable ici :
