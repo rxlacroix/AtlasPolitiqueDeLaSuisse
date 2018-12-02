@@ -1,6 +1,6 @@
 ---
 title: "Paysage politique suisse"
-date: "11 decembre 2017"
+date: "2 decembre 2018 (maj)"
 output:
   html_document: default
   pdf_document: default
@@ -26,18 +26,18 @@ Ensuite, avec une methode a base d'estimation de densite par les noyaux explicit
 Les paquets R suivants vont nous etre utiles :
 
 ```{r message=FALSE}
-require(FactoMineR)
-require(factoextra)
-require(stringi)
-require(psych)
-require(REdaS)
-require(knitr)
-require(reshape2)
-require(spatialEco)
-require(sp)
-require(raster)
-require(RColorBrewer)
-require(tidyverse)
+library(FactoMineR)
+library(factoextra)
+library(stringi)
+library(psych)
+library(REdaS)
+library(knitr)
+library(reshape2)
+library(spatialEco)
+library(sp)
+library(raster)
+library(tidyverse)
+library(sf)
 
 ```
 
@@ -489,3 +489,185 @@ Zone Germanophone
 Zone italophone
 ![](https://github.com/rxlacroix/AtlasPolitiqueDeLaSuisse/blob/master/scores_ITA.png?raw=true)
 
+
+### Evolution 2003-2017
+
+On refait l'acp avec tout, mais les mêmes paramètres : 
+```{r, message=FALSE}
+acp <- principal(data[,4:312], nfactors = 3)
+summary(acp)
+```
+
+```{r}
+plot(100*acp$values/sum(acp$values),
+     xlim = c(1,8), ylim = c(0,30), 
+     xlab = "Composante", ylab = "% de variance expliquee", 
+     type = "b", las=1)
+```
+
+
+On doit a present regarder les differentes composantes obtenues : 
+```{r}
+p <- print(acp)
+```
+Ici, RC3 = RC3(old) et RC1 = RC1(old)
+
+
+```{r}
+scoresnew <- as.data.frame(acp$scores) 
+
+head(scoresnew)
+```
+
+```{r, message=FALSE}
+scoresnew$Commune <- row.names(scoresnew)
+scoresnew$Commune <- stri_sub(scoresnew$Commune,3)
+scoresnew$Commune <- gsub('\\.\\.', ' (', scoresnew$Commune)
+scoresnew$Commune <- gsub('H\\.', 'H)', scoresnew$Commune)
+scoresnew$Commune <- gsub('G\\.', 'G)', scoresnew$Commune)
+scoresnew$Commune <- gsub('Z\\.', 'Z)', scoresnew$Commune)
+scoresnew$Commune <- gsub('E\\.', 'E)', scoresnew$Commune)
+scoresnew$Commune <- gsub('L\\.', 'L)', scoresnew$Commune)
+scoresnew$Commune <- gsub('U\\.', 'U)', scoresnew$Commune)
+scoresnew$Commune <- gsub('R\\.', 'R)', scoresnew$Commune)
+scoresnew$Commune <- gsub('O\\.', 'O)', scoresnew$Commune)
+scoresnew$Commune <- gsub('W\\.', 'W)', scoresnew$Commune)
+scoresnew$Commune <- gsub('D\\.', 'D)', scoresnew$Commune)
+scoresnew$Commune <- gsub('S\\.', 'S)', scoresnew$Commune)
+scoresnew$Commune <- gsub('\\.', ' ', scoresnew$Commune)
+scoresnew$Commune <- gsub('\\(Urne commune', '', scoresnew$Commune)
+scoresnew$Commune <- gsub('St \\(', 'St\\. ', scoresnew$Commune)
+scoresnew$Commune <- gsub('Biel Bienne', 'Biel/Bienne', scoresnew$Commune)
+```
+
+On peut alors fusionner les deux fichiers :
+
+```{r, message=FALSE}
+
+scoresnew <- merge(scoresnew, communes, by= "Commune")
+```
+
+Et on garde ce qui est necessaire :
+
+```{r, message=FALSE}
+
+scoresnew <- scoresnew[,1:6]
+```
+
+### Couleur : langue
+
+L'analyse politique suisse est evidemment geolinguistique : on doit donc retrouver ces langues dans nos donnees. Pour cela on se sert du code geographique qui est fonction des cantons et districts.
+
+```{r, message=FALSE}
+scoresnew$langue <- ""
+scoresnew$langue[scoresnew$Code.commune <1720] <- "ALL"
+scoresnew$langue[scoresnew$Code.commune <5400 & scoresnew$Code.commune > 5000] <- "ITA" # TI
+scoresnew$langue[scoresnew$Code.commune >5400 & scoresnew$Code.commune < 5940] <- "FRA" # VD
+scoresnew$langue[scoresnew$Code.commune >6400] <- "FRA" # JU GE NE
+scoresnew$langue[scoresnew$Code.commune >1000 & scoresnew$Code.commune < 1720] <- "ALL"
+scoresnew$langue[scoresnew$Code.commune >2400 & scoresnew$Code.commune < 4960] <- "ALL"
+scoresnew$langue[scoresnew$Code.commune >2000 & scoresnew$Code.commune < 2340] <- "FRA"
+scoresnew$langue[scoresnew$Code.commune >6000 & scoresnew$Code.commune < 6012] <- "ALL"
+scoresnew$langue[scoresnew$Code.commune >6020 & scoresnew$Code.commune < 6040] <- "FRA"
+scoresnew$langue[scoresnew$Code.commune >6040 & scoresnew$Code.commune < 6080] <- "ALL"
+scoresnew$langue[scoresnew$Code.commune >6080 & scoresnew$Code.commune < 6100] <- "FRA"
+scoresnew$langue[scoresnew$Code.commune >6100 & scoresnew$Code.commune < 6120] <- "ALL"
+scoresnew$langue[scoresnew$Code.commune >6120 & scoresnew$Code.commune < 6160] <- "FRA"
+scoresnew$langue[scoresnew$Code.commune >6160 & scoresnew$Code.commune < 6210] <- "ALL"
+scoresnew$langue[scoresnew$Code.commune >6210 & scoresnew$Code.commune < 6270] <- "FRA"
+scoresnew$langue[scoresnew$Code.commune >6270 & scoresnew$Code.commune < 6301] <- "ALL"
+
+jurabernoisFRA <- c(681,683,687,431,432,433,690,434,691,692,694,435,723,696,437,700,724,438,701,450,716,726,715,703,441,704,442,706,443,449,707,444,445,711,713,446,717,448)
+MoesaBernina <- c(3804,3837,3831,3805,3832,3821,3822,3808,3834,3835,3823,3810,3551,3561,3531,3792)
+
+scoresnew$langue[scoresnew$Code.commune %in% jurabernoisFRA] <- "FRA"
+scoresnew$langue[scoresnew$Code.commune %in% MoesaBernina] <- "ITA"
+
+```
+
+On peut alors attribuer les couleurs :
+
+```{r, message=FALSE}
+scoresnew$Colour[scoresnew$langue == "FRA"]="#FF3D00"
+scoresnew$Colour[scoresnew$langue == "ALL"]="#5DE100"
+scoresnew$Colour[scoresnew$langue == "ITA"]="#FFBC00"
+```
+
+Et visualiser le resultat intermediaire :
+
+```{r, message=FALSE}
+par(pty="s")
+plot(-scoresnew$RC3,scoresnew$RC1, xlab = "", ylab = "", xaxt='n', yaxt="n", cex=sqrt(scoresnew$Habitants/10000),pch=16, col=scoresnew$Colour)
+mtext('Droite', side=4, line=2, las=1)
+mtext('Gauche', side=2, line=2, las=1)
+mtext("Liberal", side =3, line=1)
+mtext("Conservateur", side =1, line=1)
+legend("bottomleft",col = c("#FF3D00","#5DE100","#FFBC00"), legend = c("FRA","ALL","ITA"),pch=16)
+```
+
+
+On va maintenant regarder ce qui a changé : 
+
+```{r, message = FALSE}
+evo <- merge(scoresnew, scores, by = "Commune")
+evo$RC1diff <- evo$RC1.x-evo$RC1.y
+evo$RC3diff <- evo$RC3.x-evo$RC3.y
+```
+
+Quelques analyses statistiques : 
+
+
+```{r, message = FALSE}
+
+ggplot(evo, aes(x=RC1diff, fill=evo$langue.x)) + 
+  geom_density(alpha=.7)+
+  scale_fill_manual( values = c("#5DE100","#FF3D00","#FFBC00"))+
+  ggtitle("Evolution du progressisme en Suisse.\nComparaison données 1982-2003 vs 1982-2017")+
+  xlab("Conservatisme      <--------->             Progressisme")+
+  ylab("Densité")+
+  guides(fill=guide_legend(title="Langue"))+
+  theme_minimal()
+
+
+```
+
+```{r, message = FALSE}
+
+ggplot(evo, aes(x=RC3diff, fill=evo$langue.x)) + 
+  geom_density(alpha=.7)+
+  scale_fill_manual( values = c("#5DE100","#FF3D00","#FFBC00"))+
+  ggtitle("Evolution du 'gauchisme' en Suisse.\nComparaison données 1982-2003 vs 1982-2017")+
+  xlab("Droitisation        <--------->             Gauchisation")+
+  ylab("Densité")+
+  guides(fill=guide_legend(title="Langue"))+
+  theme_minimal()
+
+
+```
+
+On récupère le fichier .shp de l'OFS, HOHEITSGEBIET pour les communes en polygones afin de visualiser cela sur des cartes :
+
+```{r, message = FALSE}
+communes_sf <- read_sf("swissBOUNDARIES3D_1_3_TLM_HOHEITSGEBIET.shp")
+colnames(communes_sf)[16] <- "Commune"
+communes_sf$Commune <- gsub('-', ' ', communes_sf$Commune)
+communes_sf <- merge(communes_sf,evo, by = "Commune")
+colnames(communes_sf)[39] <- "Gauchisation"
+```
+```{r, message= FALSE}
+ggplot(communes_sf) +
+  geom_sf(aes(fill = Gauchisation), lwd = 0)+ 
+  scale_fill_gradient2(low='navy', mid='white', high='firebrick3')+
+  ggtitle("Evolution du 'gauchisme' en Suisse.\nComparaison données 1982-2003 vs 1982-2017")+
+  theme_minimal()
+```
+
+```{r, message= FALSE}
+colnames(communes_sf)[38] <- "Progressisme"
+
+ggplot(communes_sf) +
+  geom_sf(aes(fill = Progressisme), lwd = 0)+ 
+  scale_fill_gradient2(low='navy', mid='white', high='firebrick3')+
+  ggtitle("Evolution du 'progressisme' en Suisse.\nComparaison données 1982-2003 vs 1982-2017")+
+  theme_minimal()
+```
